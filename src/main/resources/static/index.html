@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Správa tahačů</title>
+</head>
+<body>
+<h1>Správa tahačů</h1>
+
+<form id="tahacForm">
+    <label>Značka: <input name="znacka" required></label><br>
+    <label>Model: <input name="model" required></label><br>
+    <label>Registrace: <input name="registrace" required></label><br>
+    <label>Stav KM: <input name="stavKm" type="number" required></label><br>
+    <label>STK: <input name="stk" type="date"></label><br>
+    <label>Dálniční známka: <input name="dalnicniZnamka" type="date"></label><br>
+    <label>Datum registrace: <input name="registraceDatum" type="date"></label><br>
+    <button type="submit">Uložit</button>
+</form>
+
+<h2>Seznam tahačů</h2>
+<ul id="tahaceList"></ul>
+
+<script>
+    const form = document.getElementById('tahacForm');
+    const list = document.getElementById('tahaceList');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Konverze čísel a dat
+        data.stavKm = parseInt(data.stavKm);
+        data.stk = data.stk || null;
+        data.dalnicniZnamka = data.dalnicniZnamka || null;
+        data.registraceDatum = data.registraceDatum || null;
+
+        await fetch('/api/tahace', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        form.reset();
+        loadTahace();
+    });
+
+    async function loadTahace() {
+        const res = await fetch('/api/tahace');
+        const tahace = await res.json();
+
+        list.innerHTML = '';
+        tahace.forEach(t => {
+            const li = document.createElement('li');
+            li.textContent = `${t.znacka} ${t.model} (${t.registrace}) - ${t.stavKm} km`;
+            list.appendChild(li);
+        });
+    }
+
+    loadTahace(); // načti při startu
+</script>
+</body>
+</html>
