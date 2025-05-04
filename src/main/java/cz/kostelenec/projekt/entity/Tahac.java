@@ -16,7 +16,7 @@ public class Tahac {
 
     private String znacka;
     private String model;
-    private String registrace;
+    private String spz;
     private int stavKm;
 
     private LocalDate stk;
@@ -34,8 +34,8 @@ public class Tahac {
     public String getModel() { return model; }
     public void setModel(String model) { this.model = model; }
 
-    public String getRegistrace() { return registrace; }
-    public void setRegistrace(String registrace) { this.registrace = registrace; }
+    public String getSpz() { return spz; }
+    public void setSpz(String spz) { this.spz = spz; }
 
     public int getStavKm() { return stavKm; }
     public void setStavKm(int stavKm) { this.stavKm = stavKm; }

@@ -2,63 +2,113 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <title>Správa tahačů</title>
+    <title>Správa přepravní společnosti</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .tab { display: none; }
+        .tab.active { display: block; }
+        .tabs button { margin-right: 5px; }
+        label { display: block; margin-top: 10px; }
+        input, select { width: 100%; padding: 5px; }
+        .tab-content { display: flex; gap: 20px; margin-top: 20px; }
+        .form-column { flex: 1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+    </style>
 </head>
 <body>
-<h1>Správa tahačů</h1>
+<h1>Správa přepravní společnosti</h1>
 
-<form id="tahacForm">
-    <label>Značka: <input name="znacka" required></label><br>
-    <label>Model: <input name="model" required></label><br>
-    <label>Registrace: <input name="registrace" required></label><br>
-    <label>Stav KM: <input name="stavKm" type="number" required></label><br>
-    <label>STK: <input name="stk" type="date"></label><br>
-    <label>Dálniční známka: <input name="dalnicniZnamka" type="date"></label><br>
-    <label>Datum registrace: <input name="registraceDatum" type="date"></label><br>
-    <button type="submit">Uložit</button>
-</form>
+<div class="tabs">
+    <button onclick="showTab('tahac')">Tahač</button>
+    <button onclick="showTab('ridic')">Řidič</button>
+    <button onclick="showTab('firma')">Firma</button>
+    <button onclick="showTab('zakazka')">Zakázka</button>
+    <button onclick="showTab('servis')">Servis</button>
+    <button onclick="showTab('cesta')">Cesta</button>
+    <button onclick="showTab('palivo')">Palivo</button>
+    <button onclick="showTab('kontrola')">Kontrola</button>
+    <button onclick="showTab('typKontroly')">Typ kontroly</button>
+    <button onclick="showTab('naklad')">Náklad</button>
+    <button onclick="showTab('prirazeni')">Přiřazení</button>
+</div>
 
-<h2>Seznam tahačů</h2>
-<ul id="tahaceList"></ul>
+<div id="tabsContainer">
+</div>
 
 <script>
-    const form = document.getElementById('tahacForm');
-    const list = document.getElementById('tahaceList');
+    const tabs = [
+        'tahac', 'ridic', 'firma', 'zakazka', 'servis',
+        'cesta', 'palivo', 'kontrola', 'typKontroly', 'naklad', 'prirazeni'
+    ];
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
+    const fields = {
+        tahac: ["ID tahače", "Značka", "Model", "Registrační značka", "Stav KM:number", "STK:date", "Dálniční známka:date", "Datum registrace:date"],
+        ridic: ["Řidič ID", "Jméno", "Příjmení", "Datum narození:date", "Zaměstnán od:date", "Tahac ID"],
+        firma: ["Název", "Adresa", "IČO", "Bankovní spojení"],
+        zakazka: ["Cena", "Řidič ID", "Firma ID", "Status", "Destinace", "Vytvořeno:date"],
+        servis: ["Tahac ID", "Datum:date", "Popis", "Cena"],
+        cesta: ["Tahac ID", "Řidič ID", "Začátek:date", "Konec:date", "Vzdálenost (km)"],
+        palivo: ["Tahac ID", "Datum:date", "Množství (litry)", "Cena"],
+        kontrola: ["Tahac ID", "Datum:date", "Typ kontroly (ID)", "Výsledek", "Další kontrola:date"],
+        typKontroly: ["ID", "Popis"],
+        naklad: ["Zakázka ID", "Cesta ID", "Popis", "Cena"],
+        prirazeni: ["Řidič ID", "Tahac ID", "Přiřazeno od:date", "Přiřazeno do:date"]
+    };
 
-        // Konverze čísel a dat
-        data.stavKm = parseInt(data.stavKm);
-        data.stk = data.stk || null;
-        data.dalnicniZnamka = data.dalnicniZnamka || null;
-        data.registraceDatum = data.registraceDatum || null;
+    const tabsContainer = document.getElementById('tabsContainer');
 
-        await fetch('/api/tahace', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+    tabs.forEach(tabId => {
+        const div = document.createElement('div');
+        div.id = tabId;
+        div.className = 'tab';
+
+        const h2 = document.createElement('h2');
+        h2.textContent = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+        div.appendChild(h2);
+
+        const content = document.createElement('div');
+        content.className = 'tab-content';
+
+        const formCol = document.createElement('div');
+        formCol.className = 'form-column';
+
+        fields[tabId].forEach(f => {
+            const [labelText, type] = f.split(':');
+            const label = document.createElement('label');
+            const input = document.createElement('input');
+            if (type) input.type = type;
+            label.textContent = labelText + ':';
+            label.appendChild(input);
+            formCol.appendChild(label);
         });
 
-        form.reset();
-        loadTahace();
+        const btnSave = document.createElement('button');
+        btnSave.textContent = 'Uložit';
+        formCol.appendChild(btnSave);
+
+        const btnLoad = document.createElement('button');
+        btnLoad.textContent = 'Načíst';
+        formCol.appendChild(btnLoad);
+
+        content.appendChild(formCol);
+
+        const tableCol = document.createElement('div');
+        tableCol.className = 'form-column';
+        tableCol.innerHTML = '<table><thead><tr><th>Data</th></tr></thead><tbody></tbody></table>';
+        content.appendChild(tableCol);
+
+        div.appendChild(content);
+        tabsContainer.appendChild(div);
     });
 
-    async function loadTahace() {
-        const res = await fetch('/api/tahace');
-        const tahace = await res.json();
-
-        list.innerHTML = '';
-        tahace.forEach(t => {
-            const li = document.createElement('li');
-            li.textContent = `${t.znacka} ${t.model} (${t.registrace}) - ${t.stavKm} km`;
-            list.appendChild(li);
-        });
+    function showTab(id) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
     }
 
-    loadTahace(); // načti při startu
+    // Inicializuj první záložku
+    showTab('tahac');
 </script>
 </body>
 </html>
