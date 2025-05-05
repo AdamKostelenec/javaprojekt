@@ -24,205 +24,221 @@
     <button onclick="showTab('tahac')">Tahač</button>
     <button onclick="showTab('ridic')">Řidič</button>
     <button onclick="showTab('firma')">Firma</button>
+    <button onclick="showTab('zakazka')">Zakázka</button>
+    <button onclick="showTab('servis')">Servis</button>
+    <button onclick="showTab('cesta')">Cesta</button>
+    <button onclick="showTab('palivo')">Palivo</button>
+    <button onclick="showTab('typ')">Typ kontroly</button>
+    <button onclick="showTab('kontrola')">Kontrola</button>
+    <button onclick="showTab('naklad')">Náklad</button>
+    <button onclick="showTab('prirazeni')">Přiřazení</button>
 </div>
 
 <div id="tabsContainer">
-    <!-- Tahač -->
-    <div id="tahac" class="tab active">
-        <h2>Tahač</h2>
-        <div class="tab-content">
-            <div class="form-column">
-                <label>Značka:<input id="tahacZnacka"></label>
-                <label>Model:<input id="tahacModel"></label>
-                <label>SPZ:<input id="tahacSpz"></label>
-                <label>Stav KM:<input id="tahacStavKm" type="number"></label>
-                <label>STK:<input id="tahacStk" type="date"></label>
-                <label>Dálniční známka:<input id="tahacDalnicni" type="date"></label>
-                <label>Datum registrace:<input id="tahacRegistrace" type="date"></label>
-                <button id="btnSaveTahac">Uložit tahač</button>
-                <button id="btnLoadTahace">Načíst tahače</button>
-            </div>
-            <div class="form-column">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>ID</th><th>Značka</th><th>Model</th><th>SPZ</th><th>Stav KM</th><th>STK</th><th>Dálniční známka</th><th>Registrace</th><th>Akce</th>
-                    </tr>
-                    </thead>
-                    <tbody id="tahacTbody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Řidič -->
-    <div id="ridic" class="tab">
-        <h2>Řidič</h2>
-        <div class="tab-content">
-            <div class="form-column">
-                <label>Jméno:<input id="ridicJmeno"></label>
-                <label>Příjmení:<input id="ridicPrijmeni"></label>
-                <label>Datum narození:<input id="ridicNarozen" type="date"></label>
-                <label>Zaměstnán od:<input id="ridicZamestnanOd" type="date"></label>
-                <label>ID tahače:<input id="ridicTahacId" type="number"></label>
-                <button id="btnSaveRidic">Uložit řidiče</button>
-                <button id="btnLoadRidici">Načíst řidiče</button>
-            </div>
-            <div class="form-column">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>ID</th><th>Jméno</th><th>Příjmení</th><th>Datum narození</th><th>Zaměstnán od</th><th>ID tahače</th><th>Akce</th>
-                    </tr>
-                    </thead>
-                    <tbody id="ridicTbody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firma -->
-    <div id="firma" class="tab">
-        <h2>Firma</h2>
-        <div class="tab-content">
-            <div class="form-column">
-                <label>Název:<input id="firmaNazev"></label>
-                <label>Adresa:<input id="firmaAdresa"></label>
-                <label>IČO:<input id="firmaIco"></label>
-                <label>Bankovní spojení:<input id="firmaBankdetails"></label>
-                <button id="btnSaveFirma">Uložit firmu</button>
-                <button id="btnLoadFirmy">Načíst firmy</button>
-            </div>
-            <div class="form-column">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>ID</th><th>Název</th><th>Adresa</th><th>IČO</th><th>Bankovní spojení</th><th>Akce</th>
-                    </tr>
-                    </thead>
-                    <tbody id="firmaTbody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <!-- Budou doplněny JavaScriptem -->
 </div>
 
 <script>
+    // Definice záložek a jejich polí
+    const tabs = [
+        'tahac', 'ridic', 'firma', 'zakazka', 'servis',
+        'cesta', 'palivo', 'typ', 'kontrola', 'naklad', 'prirazeni'
+    ];
+
+    const fields = {
+        tahac: [
+            { name: 'znacka', label: 'Značka', type: 'text' },
+            { name: 'model', label: 'Model', type: 'text' },
+            { name: 'spz', label: 'SPZ', type: 'text' },
+            { name: 'stavKm', label: 'Stav KM', type: 'number' },
+            { name: 'stk', label: 'STK', type: 'date' },
+            { name: 'dalnicniZnamka', label: 'Dálniční známka', type: 'date' },
+            { name: 'registraceDatum', label: 'Datum registrace', type: 'date' }
+        ],
+        ridic: [
+            { name: 'jmeno', label: 'Jméno', type: 'text' },
+            { name: 'prijmeni', label: 'Příjmení', type: 'text' },
+            { name: 'datumNarozeni', label: 'Datum narození', type: 'date' },
+            { name: 'zamestnanOd', label: 'Zaměstnán od', type: 'date' },
+            { name: 'tahacId', label: 'ID tahače', type: 'number' }
+        ],
+        firma: [
+            { name: 'nazev', label: 'Název', type: 'text' },
+            { name: 'adresa', label: 'Adresa', type: 'text' },
+            { name: 'ico', label: 'IČO', type: 'text' },
+            { name: 'bankdetails', label: 'Bankovní spojení', type: 'text' }
+        ],
+        zakazka: [
+            { name: 'cena', label: 'Cena', type: 'number' },
+            { name: 'ridicId', label: 'ID řidiče', type: 'number' },
+            { name: 'tahacId', label: 'ID tahače', type: 'number' },
+            { name: 'status', label: 'Status', type: 'text' },
+            { name: 'destinace', label: 'Destinace', type: 'text' },
+            { name: 'vytvoreno', label: 'Vytvořeno', type: 'date' }
+        ],
+        servis: [
+            { name: 'tahacId', label: 'ID tahače', type: 'number' },
+            { name: 'datum', label: 'Datum', type: 'date' },
+            { name: 'popis', label: 'Popis', type: 'text' },
+            { name: 'cena', label: 'Cena', type: 'number' }
+        ],
+        cesta: [
+            { name: 'tahacId', label: 'ID tahače', type: 'number' },
+            { name: 'ridicId', label: 'ID řidiče', type: 'number' },
+            { name: 'start', label: 'Začátek', type: 'datetime-local' },
+            { name: 'konec', label: 'Konec', type: 'datetime-local' },
+            { name: 'vzdalenostKm', label: 'Vzdálenost (km)', type: 'number' }
+        ],
+        palivo: [
+            { name: 'tahacId', label: 'ID tahače', type: 'number' },
+            { name: 'datum', label: 'Datum', type: 'date' },
+            { name: 'mnozstviLitry', label: 'Množství (l)', type: 'number' },
+            { name: 'cena', label: 'Cena', type: 'number' }
+        ],
+        typ: [
+            { name: 'popis', label: 'Popis', type: 'text' }
+        ],
+        kontrola: [
+            { name: 'tahacId', label: 'ID tahače', type: 'number' },
+            { name: 'typ', label: 'Typ kontroly (ID)', type: 'number' },
+            { name: 'vysledek', label: 'Výsledek', type: 'text' },
+            { name: 'dalsiKontrola', label: 'Další kontrola', type: 'date' }
+        ],
+        naklad: [
+            { name: 'zakazkaId', label: 'ID zakázky', type: 'number' },
+            { name: 'cestaId', label: 'ID cesty', type: 'number' },
+            { name: 'popis', label: 'Popis', type: 'text' },
+            { name: 'cena', label: 'Cena', type: 'number' }
+        ],
+        prirazeni: [
+            { name: 'ridicId', label: 'ID řidiče', type: 'number' },
+            { name: 'tahacId', label: 'ID tahače', type: 'number' },
+            { name: 'prirazenoOd', label: 'Přiřazeno od', type: 'datetime-local' },
+            { name: 'prirazenoDo', label: 'Přiřazeno do', type: 'datetime-local' }
+        ]
+    };
+
+    // Vytvoření UI pro každou záložku
+    tabs.forEach(tabId => {
+        const container = document.createElement('div');
+        container.id = tabId;
+        container.className = 'tab';
+
+        const title = document.createElement('h2');
+        title.textContent = tabId.charAt(0).toUpperCase() + tabId.slice(1);
+        container.appendChild(title);
+
+        const content = document.createElement('div');
+        content.className = 'tab-content';
+
+        // Formulář
+        const formCol = document.createElement('div');
+        formCol.className = 'form-column';
+        fields[tabId].forEach(field => {
+            const label = document.createElement('label');
+            label.textContent = field.label + ':';
+            const input = document.createElement('input');
+            input.id = tabId + field.name.charAt(0).toUpperCase() + field.name.slice(1);
+            input.type = field.type;
+            label.appendChild(input);
+            formCol.appendChild(label);
+        });
+        const btnSave = document.createElement('button');
+        btnSave.textContent = 'Uložit';
+        btnSave.id = 'btnSave' + tabId;
+        const btnLoad = document.createElement('button');
+        btnLoad.textContent = 'Načíst';
+        btnLoad.id = 'btnLoad' + tabId;
+        formCol.appendChild(btnSave);
+        formCol.appendChild(btnLoad);
+
+        // Tabulka
+        const tableCol = document.createElement('div');
+        tableCol.className = 'form-column';
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const headRow = document.createElement('tr');
+        fields[tabId].forEach(field => {
+            const th = document.createElement('th');
+            th.textContent = field.label;
+            headRow.appendChild(th);
+        });
+        const thAction = document.createElement('th');
+        thAction.textContent = 'Akce';
+        headRow.appendChild(thAction);
+        thead.appendChild(headRow);
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
+        tbody.id = tabId + 'Tbody';
+        table.appendChild(tbody);
+        tableCol.appendChild(table);
+
+        content.appendChild(formCol);
+        content.appendChild(tableCol);
+        container.appendChild(content);
+        document.getElementById('tabsContainer').appendChild(container);
+    });
+
+    // Zobrazení a CRUD logika
     function showTab(id) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if (id === 'tahac') loadTahace();
-        if (id === 'ridic') loadRidici();
-        if (id === 'firma') loadFirmy();
     }
 
-    // Tahače
-    document.getElementById('btnSaveTahac').addEventListener('click', async () => {
-        const data = {
-            znacka: document.getElementById('tahacZnacka').value,
-            model: document.getElementById('tahacModel').value,
-            spz: document.getElementById('tahacSpz').value,
-            stavKm: parseInt(document.getElementById('tahacStavKm').value) || 0,
-            stk: document.getElementById('tahacStk').value || null,
-            dalnicniZnamka: document.getElementById('tahacDalnicni').value || null,
-            registraceDatum: document.getElementById('tahacRegistrace').value || null
-        };
-        await fetch('/api/tahace', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-        loadTahace();
+    // Mapování názvů na endpointy
+    const apiMap = {
+        tahac: 'tahace', ridic: 'ridici', firma: 'firmy', zakazka: 'zakazky', servis: 'servisy',
+        cesta: 'cesty', palivo: 'paliva', typ: 'typy-kontrol', kontrola: 'kontroly', naklad: 'naklady', prirazeni: 'prirazeni'
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        tabs.forEach(tabId => {
+            document.getElementById('btnLoad' + tabId)
+                .addEventListener('click', () => loadEntity(tabId));
+            document.getElementById('btnSave' + tabId)
+                .addEventListener('click', () => saveEntity(tabId));
+        });
+        showTab('tahac');
     });
 
-    async function loadTahace() {
-        const res = await fetch('/api/tahace');
-        const tahace = await res.json();
-        const tbody = document.getElementById('tahacTbody'); tbody.innerHTML = '';
-        tahace.forEach(t => {
+    async function loadEntity(tabId) {
+        const res = await fetch(`/api/${apiMap[tabId]}`);
+        const data = await res.json();
+        const tbody = document.getElementById(tabId + 'Tbody');
+        tbody.innerHTML = '';
+        data.forEach(item => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${t.id}</td><td>${t.znacka}</td><td>${t.model}</td><td>${t.spz}</td>
-                <td>${t.stavKm}</td><td>${t.stk||''}</td><td>${t.dalnicniZnamka||''}</td><td>${t.registraceDatum||''}</td>
-                <td><button onclick="deleteTahac(${t.id})">Smazat</button></td>
-            `;
+            fields[tabId].forEach(field => {
+                const td = document.createElement('td');
+                td.textContent = item[field.name] || '';
+                tr.appendChild(td);
+            });
+            const tdAction = document.createElement('td');
+            const btnDel = document.createElement('button');
+            btnDel.textContent = 'Smazat';
+            btnDel.addEventListener('click', () => deleteEntity(tabId, item.id));
+            tdAction.appendChild(btnDel);
+            tr.appendChild(tdAction);
             tbody.appendChild(tr);
         });
     }
 
-    async function deleteTahac(id) {
-        await fetch(`/api/tahace/${id}`, { method: 'DELETE' });
-        loadTahace();
-    }
-
-    document.getElementById('btnLoadTahace').addEventListener('click', loadTahace);
-
-    // Řidiče
-    document.getElementById('btnSaveRidic').addEventListener('click', async () => {
-        const data = {
-            jmeno: document.getElementById('ridicJmeno').value,
-            prijmeni: document.getElementById('ridicPrijmeni').value,
-            datumNarozeni: document.getElementById('ridicNarozen').value || null,
-            zamestnanOd: document.getElementById('ridicZamestnanOd').value || null,
-            tahacId: parseInt(document.getElementById('ridicTahacId').value) || null
-        };
-        await fetch('/api/ridici', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-        loadRidici();
-    });
-
-    async function loadRidici() {
-        const res = await fetch('/api/ridici');
-        const ridici = await res.json();
-        const tbody = document.getElementById('ridicTbody'); tbody.innerHTML = '';
-        ridici.forEach(r => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${r.id}</td><td>${r.jmeno}</td><td>${r.prijmeni}</td>
-                <td>${r.datumNarozeni||''}</td><td>${r.zamestnanOd||''}</td><td>${r.tahacId||''}</td>
-                <td><button onclick="deleteRidic(${r.id})">Smazat</button></td>
-            `;
-            tbody.appendChild(tr);
+    async function saveEntity(tabId) {
+        const payload = {};
+        fields[tabId].forEach(field => {
+            const input = document.getElementById(tabId + field.name.charAt(0).toUpperCase() + field.name.slice(1));
+            payload[field.name] = input.value || null;
         });
-    }
-
-    async function deleteRidic(id) {
-        await fetch(`/api/ridici/${id}`, { method: 'DELETE' });
-        loadRidici();
-    }
-
-    document.getElementById('btnLoadRidici').addEventListener('click', loadRidici);
-
-    // Firmy
-    document.getElementById('btnSaveFirma').addEventListener('click', async () => {
-        const data = {
-            nazev: document.getElementById('firmaNazev').value,
-            adresa: document.getElementById('firmaAdresa').value,
-            ico: document.getElementById('firmaIco').value,
-            bankdetails: document.getElementById('firmaBankdetails').value
-        };
-        await fetch('/api/firmy', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-        loadFirmy();
-    });
-
-    async function loadFirmy() {
-        const res = await fetch('/api/firmy');
-        const firmy = await res.json();
-        const tbody = document.getElementById('firmaTbody'); tbody.innerHTML = '';
-        firmy.forEach(f => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${f.id}</td><td>${f.nazev}</td><td>${f.adresa}</td><td>${f.ico}</td><td>${f.bankdetails}</td>
-                <td><button onclick="deleteFirma(${f.id})">Smazat</button></td>
-            `;
-            tbody.appendChild(tr);
+        await fetch(`/api/${apiMap[tabId]}`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
         });
+        loadEntity(tabId);
     }
 
-    async function deleteFirma(id) {
-        await fetch(`/api/firmy/${id}`, { method: 'DELETE' });
-        loadFirmy();
+    async function deleteEntity(tabId, id) {
+        await fetch(`/api/${apiMap[tabId]}/${id}`, {method: 'DELETE'});
+        loadEntity(tabId);
     }
-
-    document.getElementById('btnLoadFirmy').addEventListener('click', loadFirmy);
-
-    // Inicializace první záložky
-    showTab('tahac');
 </script>
 </body>
 </html>
