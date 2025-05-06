@@ -1,3 +1,4 @@
+// PalivoController.java
 package cz.kostelenec.projekt.controller;
 
 import cz.kostelenec.projekt.entity.Palivo;
@@ -19,6 +20,11 @@ public class PalivoController {
     @GetMapping
     public List<Palivo> getAll() {
         return palivoRepository.findAll();
+    }
+
+    @GetMapping("/tahac/{tahacId}")
+    public List<Palivo> getByTahac(@PathVariable Long tahacId) {
+        return palivoRepository.findByTahacIdOrderByDatumDesc(tahacId);
     }
 
     @PostMapping
