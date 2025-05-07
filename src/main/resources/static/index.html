@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -208,54 +209,95 @@
         });
     }
 
-    function startEdit(tab,item) {
+    function startEdit(tab, item) {
         currentEdit = { tab, id: item.id };
-        if (tab==='tahac') {
-            document.getElementById('tahacId').value = item.id;
-            document.getElementById('tahacModel').value = '';
+
+        if (tab === 'tahac') {
+            // Zneaktivujeme pole s ID, uživatel ho nebude moci měnit
+            const idInput = document.getElementById('tahacId');
+            idInput.value    = item.id;
+            idInput.disabled = true;
+
+            // Pokud jste dřív používali tahacModel pro filtraci, smažte ho
+            const modelFilter = document.getElementById('tahacModel');
+            if (modelFilter) {
+                modelFilter.value = '';
+            }
         }
-        fields[tab].forEach(f=>{
-            let val = item[f.name]||'';
-            if (f.type==='datetime-local' && val) val = val.substring(0,16);
-            document.getElementById(tab+capitalize(f.name)).value = val;
+
+        // Naplníme zbytek polí daty z itemu
+        fields[tab].forEach(f => {
+            let val = item[f.name] || '';
+            if (f.type === 'datetime-local' && val) {
+                val = val.substring(0, 16);
+            }
+            document.getElementById(tab + capitalize(f.name)).value = val;
         });
-        document.getElementById('btnSave'+capitalize(tab)).textContent = 'Aktualizovat';
+
+        // Přepneme text tlačítka na "Aktualizovat"
+        document.getElementById('btnSave' + capitalize(tab)).textContent = 'Aktualizovat';
     }
+
 
     async function saveEntity(tab) {
-        const payload = {};
-        if (tab==='tahac') {
-            const idVal = document.getElementById('tahacId').value.trim();
-            payload.id = idVal ? Number(idVal) : null;
-        }
-        fields[tab].forEach(f=>{
-            const v = document.getElementById(tab+capitalize(f.name)).value;
-            payload[f.name] = v||null;
-        });
-        if (currentEdit.tab===tab && currentEdit.id) payload.id = currentEdit.id;
+        const api    = apiMap[tab];
+        let url      = `/api/${api}`;
+        let method   = 'POST';
 
-        const resp = await fetch(`/api/${apiMap[tab]}`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(payload)
-        });
-        if (!resp.ok) {
-            if (resp.status===409) {
-                const msg = await resp.text();
-                alert(msg);
-            } else {
-                alert(`Chyba serveru: ${resp.status}`);
+        // --- Sestavení payloadu ---
+        const payload = {};
+        if (tab === 'tahac') {
+            // Pro tahac načteme ID (pro vytvoření) z inputu
+            const idVal = document.getElementById('tahacId').value.trim();
+            if (idVal) {
+                payload.id = Number(idVal);
             }
-            return;
         }
-        currentEdit = { tab:null, id:null };
-        document.getElementById('btnSave'+capitalize(tab)).textContent = 'Uložit';
-        document.getElementById('tahacId').value = '';
-        document.getElementById('tahacModel').value = '';
-        document.querySelectorAll(`#${tab} .form-column input:not(#tahacId):not(#tahacModel)`)
-            .forEach(i=>i.value='');
+        // Ostatní pole podle definice fields
+        fields[tab].forEach(f => {
+            payload[f.name] = document.getElementById(tab + capitalize(f.name)).value || null;
+        });
+
+        // --- Rozlišení create vs update podle currentEdit ---
+        if (currentEdit.tab === tab && currentEdit.id) {
+            method = 'PUT';
+            url    = `/api/${api}/${currentEdit.id}`;
+            // PUT očekává v těle i ID
+            payload.id = currentEdit.id;
+        }
+
+        // --- Odeslání požadavku ---
+        const resp = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+            const text = await resp.text();
+            return alert(`Chyba ${resp.status}: ${text}`);
+        }
+
+        // --- Úspěch: reset stavu a formuláře ---
+        currentEdit = { tab: null, id: null };
+        document.getElementById('btnSave' + capitalize(tab)).textContent = 'Uložit';
+
+        if (tab === 'tahac') {
+            // znovu povolíme ID input pro další vložení
+            const idInput = document.getElementById('tahacId');
+            idInput.disabled = false;
+            idInput.value    = '';
+        }
+
+        // vyčistíme všechna ostatní políčka ve formuláři
+        document.querySelectorAll(
+            `#${tab} .form-column input:not(#tahacId)`
+        ).forEach(i => i.value = '');
+
+        // znovu načteme data do tabulky
         loadEntity(tab);
     }
+
 
     async function deleteEntity(tab,id) {
         await fetch(`/api/${apiMap[tab]}/${id}`,{method:'DELETE'});
