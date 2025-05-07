@@ -244,29 +244,79 @@
         let url      = `/api/${api}`;
         let method   = 'POST';
 
-        // --- Sestavení payloadu ---
-        const payload = {};
-        if (tab === 'tahac') {
-            // Pro tahac načteme ID (pro vytvoření) z inputu
-            const idVal = document.getElementById('tahacId').value.trim();
-            if (idVal) {
-                payload.id = Number(idVal);
-            }
-        }
-        // Ostatní pole podle definice fields
-        fields[tab].forEach(f => {
-            payload[f.name] = document.getElementById(tab + capitalize(f.name)).value || null;
-        });
-
-        // --- Rozlišení create vs update podle currentEdit ---
         if (currentEdit.tab === tab && currentEdit.id) {
             method = 'PUT';
             url    = `/api/${api}/${currentEdit.id}`;
-            // PUT očekává v těle i ID
-            payload.id = currentEdit.id;
         }
 
-        // --- Odeslání požadavku ---
+        const payload = {};
+
+        if (tab === 'tahac') {
+            const idVal = document.getElementById('tahacId').value.trim();
+            if (idVal) payload.id = Number(idVal);
+        }
+
+        if (tab === 'ridic') {
+            const selTah = document.getElementById('ridicTahacId');
+            payload.tahacId = selTah && selTah.value ? Number(selTah.value) : null;
+            fields[tab].forEach(f => {
+                if (f.name !== 'tahacId') {
+                    payload[f.name] = document.getElementById(tab + capitalize(f.name)).value || null;
+                }
+            });
+
+        } else if (tab === 'zakazka') {
+            payload.ridicId = Number(document.getElementById('zakazkaRidicId').value || 0) || null;
+            payload.tahacId = Number(document.getElementById('zakazkaTahacId').value || 0) || null;
+            ['cena','status','destinace','vytvoreno'].forEach(name => {
+                payload[name] = document.getElementById(tab + capitalize(name)).value || null;
+            });
+
+        } else if (tab === 'prirazeni') {
+            payload.ridicId     = Number(document.getElementById('prirazeniRidicId').value || 0) || null;
+            payload.tahacId     = Number(document.getElementById('prirazeniTahacId').value || 0) || null;
+            payload.prirazenoOd = document.getElementById(tab + 'PrirazenoOd').value || null;
+            payload.prirazenoDo = document.getElementById(tab + 'PrirazenoDo').value || null;
+
+        } else if (tab === 'servis') {
+            payload.tahacId = Number(document.getElementById('servisTahacId').value || 0) || null;
+            ['datum','popis','cena'].forEach(name => {
+                payload[name] = document.getElementById(tab + capitalize(name)).value || null;
+            });
+
+        } else if (tab === 'cesta') {
+            payload.tahacId = Number(document.getElementById('cestaTahacId').value || 0) || null;
+            payload.ridicId = Number(document.getElementById('cestaRidicId').value || 0) || null;
+            ['start','konec','vzdalenostKm'].forEach(name => {
+                payload[name] = document.getElementById(tab + capitalize(name)).value || null;
+            });
+
+        } else if (tab === 'palivo') {
+            payload.tahacId = Number(document.getElementById('palivoTahacId').value || 0) || null;
+            ['datum','mnozstviLitry','cena'].forEach(name => {
+                payload[name] = document.getElementById(tab + capitalize(name)).value || null;
+            });
+
+        } else if (tab === 'kontrola') {
+            payload.tahacId = Number(document.getElementById('kontrolaTahacId').value || 0) || null;
+            payload.typ     = Number(document.getElementById('kontrolaTyp').value || 0) || null;
+            ['vysledek','dalsiKontrola'].forEach(name => {
+                payload[name] = document.getElementById(tab + capitalize(name)).value || null;
+            });
+
+        } else if (tab === 'naklad') {
+            payload.zakazkaId = Number(document.getElementById('nakladZakazkaId').value || 0) || null;
+            payload.cestaId   = Number(document.getElementById('nakladCestaId').value || 0) || null;
+            ['popis','cena'].forEach(name => {
+                payload[name] = document.getElementById(tab + capitalize(name)).value || null;
+            });
+
+        } else {
+            fields[tab].forEach(f => {
+                payload[f.name] = document.getElementById(tab + capitalize(f.name)).value || null;
+            });
+        }
+
         const resp = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
@@ -278,25 +328,26 @@
             return alert(`Chyba ${resp.status}: ${text}`);
         }
 
-        // --- Úspěch: reset stavu a formuláře ---
         currentEdit = { tab: null, id: null };
         document.getElementById('btnSave' + capitalize(tab)).textContent = 'Uložit';
 
         if (tab === 'tahac') {
-            // znovu povolíme ID input pro další vložení
             const idInput = document.getElementById('tahacId');
             idInput.disabled = false;
-            idInput.value    = '';
+            idInput.value = '';
         }
 
-        // vyčistíme všechna ostatní políčka ve formuláři
         document.querySelectorAll(
             `#${tab} .form-column input:not(#tahacId)`
         ).forEach(i => i.value = '');
 
-        // znovu načteme data do tabulky
+        // Vyčištění selectů (dropdowny)
+        document.querySelectorAll(`#${tab} .form-column select`).forEach(s => s.value = '');
+
         loadEntity(tab);
     }
+
+
 
 
     async function deleteEntity(tab,id) {
@@ -364,16 +415,192 @@
                 formC.appendChild(lblM);
             }
 
-            fields[tab].forEach(f=>{
-                if (tab==='tahac' && f.name==='model') return;
+            fields[tab].forEach(f => {
+                // u tahače nechceme pole model, protože je filtrovací
+                if (tab === 'tahac' && f.name === 'model') return;
+
                 const lbl = document.createElement('label');
                 lbl.textContent = f.label + ':';
-                const inp = document.createElement('input');
-                inp.id = tab + capitalize(f.name);
-                inp.type = f.type;
-                lbl.appendChild(inp);
+
+                // ==== ŘIDIČ: tahacId jako dropdown ====
+                if (tab === 'ridic' && f.name === 'tahacId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'ridicTahacId';
+                    sel.appendChild(new Option('-- vyber tahač --', ''));
+                    fetch('/api/tahace')
+                        .then(r => r.json())
+                        .then(data => data.forEach(t =>
+                            sel.appendChild(new Option(`${t.id} – ${t.spz}`, t.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+                    // ==== ZAKÁZKA: ridicId jako dropdown ====
+                } else if (tab === 'zakazka' && f.name === 'ridicId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'zakazkaRidicId';
+                    sel.appendChild(new Option('-- vyber řidiče --', ''));
+                    fetch('/api/ridici')
+                        .then(r => r.json())
+                        .then(data => data.forEach(d =>
+                            sel.appendChild(new Option(`${d.id} – ${d.jmeno} ${d.prijmeni}`, d.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+                    // ==== ZAKÁZKA: tahacId jako dropdown ====
+                } else if (tab === 'zakazka' && f.name === 'tahacId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'zakazkaTahacId';
+                    sel.appendChild(new Option('-- vyber tahač --', ''));
+                    fetch('/api/tahace')
+                        .then(r => r.json())
+                        .then(data => data.forEach(t =>
+                            sel.appendChild(new Option(`${t.id} – ${t.spz}`, t.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+                    // ==== PŘIŘAZENÍ: ridicId jako dropdown ====
+                } else if (tab === 'prirazeni' && f.name === 'ridicId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'prirazeniRidicId';
+                    sel.appendChild(new Option('-- vyber řidiče --', ''));
+                    fetch('/api/ridici')
+                        .then(r => r.json())
+                        .then(data => data.forEach(d =>
+                            sel.appendChild(new Option(`${d.id} – ${d.jmeno} ${d.prijmeni}`, d.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+                    // ==== PŘIŘAZENÍ: tahacId jako dropdown ====
+                } else if (tab === 'prirazeni' && f.name === 'tahacId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'prirazeniTahacId';
+                    sel.appendChild(new Option('-- vyber tahač --', ''));
+                    fetch('/api/tahace')
+                        .then(r => r.json())
+                        .then(data => data.forEach(t =>
+                            sel.appendChild(new Option(`${t.id} – ${t.spz}`, t.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+                    // ==== SERVIS: tahacId jako dropdown ====
+                } else if (tab === 'servis' && f.name === 'tahacId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'servisTahacId';
+                    sel.appendChild(new Option('-- vyber tahač --', ''));
+                    fetch('/api/tahace')
+                        .then(r => r.json())
+                        .then(data => data.forEach(t =>
+                            sel.appendChild(new Option(`${t.id} – ${t.spz}`, t.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+// ==== CESTA: tahacId jako dropdown ====
+                } else if (tab === 'cesta' && f.name === 'tahacId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'cestaTahacId';
+                    sel.appendChild(new Option('-- vyber tahač --', ''));
+                    fetch('/api/tahace')
+                        .then(r => r.json())
+                        .then(data => data.forEach(t =>
+                            sel.appendChild(new Option(`${t.id} – ${t.spz}`, t.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+// ==== CESTA: ridicId jako dropdown ====
+                } else if (tab === 'cesta' && f.name === 'ridicId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'cestaRidicId';
+                    sel.appendChild(new Option('-- vyber řidiče --', ''));
+                    fetch('/api/ridici')
+                        .then(r => r.json())
+                        .then(data => data.forEach(r =>
+                            sel.appendChild(new Option(`${r.id} – ${r.jmeno} ${r.prijmeni}`, r.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+// ==== PALIVO: tahacId jako dropdown ====
+                } else if (tab === 'palivo' && f.name === 'tahacId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'palivoTahacId';
+                    sel.appendChild(new Option('-- vyber tahač --', ''));
+                    fetch('/api/tahace')
+                        .then(r => r.json())
+                        .then(data => data.forEach(t =>
+                            sel.appendChild(new Option(`${t.id} – ${t.spz}`, t.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+// ==== KONTROLA: tahacId jako dropdown ====
+                } else if (tab === 'kontrola' && f.name === 'tahacId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'kontrolaTahacId';
+                    sel.appendChild(new Option('-- vyber tahač --', ''));
+                    fetch('/api/tahace')
+                        .then(r => r.json())
+                        .then(data => data.forEach(t =>
+                            sel.appendChild(new Option(`${t.id} – ${t.spz}`, t.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+// ==== KONTROLA: typ jako dropdown ====
+                } else if (tab === 'kontrola' && f.name === 'typ') {
+                    const sel = document.createElement('select');
+                    sel.id = 'kontrolaTyp';
+                    sel.appendChild(new Option('-- vyber typ --', ''));
+                    fetch('/api/typy-kontrol')
+                        .then(r => r.json())
+                        .then(data => data.forEach(t =>
+                            sel.appendChild(new Option(`${t.id} – ${t.popis}`, t.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+// ==== NÁKLAD: zakazkaId jako dropdown ====
+                } else if (tab === 'naklad' && f.name === 'zakazkaId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'nakladZakazkaId';
+                    sel.appendChild(new Option('-- vyber zakázku --', ''));
+                    fetch('/api/zakazky')
+                        .then(r => r.json())
+                        .then(data => data.forEach(z =>
+                            sel.appendChild(new Option(`${z.id} – ${z.destinace}`, z.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+                // ==== NÁKLAD: cestaId jako dropdown ====
+                } else if (tab === 'naklad' && f.name === 'cestaId') {
+                    const sel = document.createElement('select');
+                    sel.id = 'nakladCestaId';
+                    sel.appendChild(new Option('-- vyber cestu --', ''));
+                    fetch('/api/cesty')
+                        .then(r => r.json())
+                        .then(data => data.forEach(c =>
+                            sel.appendChild(new Option(`${c.id} – ${c.start} → ${c.konec}`, c.id))
+                        ))
+                        .catch(console.error);
+                    lbl.appendChild(sel);
+
+                    // ==== OSTATNÍ POLE: klasický input ====
+                } else {
+                    const inp = document.createElement('input');
+                    inp.id = tab + capitalize(f.name);
+                    inp.type = f.type;
+                    lbl.appendChild(inp);
+                }
+
                 formC.appendChild(lbl);
             });
+
 
             const btn = document.createElement('button');
             btn.id = 'btnSave' + capitalize(tab);
